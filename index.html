@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>レジお願いします</title>
+
+    <style>
+      p {
+        text-align: center;
+        font-size: 18px;
+      }
+
+      .button_wrapper {
+        text-align: center;
+      }
+
+      #range_wrapper {
+        text-align: center;
+      }
+
+      #range {
+        width: 170px;
+      }
+
+      #start_button {
+        margin-top: 120px;
+        width: 300px;
+        height: 80px;
+        background-color: tomato;
+        color: black;
+        font-size: 20px;
+      }
+
+      #stop_button {
+        margin-top: 120px;
+        width: 300px;
+        height: 80px;
+        background-color: blue;
+        color: black;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      ※マナーモードでも再生されます。
+    </p>
+
+    <p>
+      ご注意ください。
+    </p>
+
+    <br /><br />
+
+    <div id="range_wrapper">
+      <label>音量</label>
+      <input type="range" id="range" max="1.0" min="0" step="0.1" value="0.5" />
+    </div>
+
+    <div class="button_wrapper">
+      <button id="start_button" onclick="play();">店員を呼ぶ</button>
+    </div>
+
+    <br />
+
+    <div class="button_wrapper">
+      <button id="stop_button" onclick="stop();">緊急停止ボタン</button>
+    </div>
+
+    <script src="cordova.js"></script>
+
+    <script>
+      let audio;
+      let VolumeControl;
+
+      // 停止
+      document.getElementById('stop_button').onclick = () => {
+        if (document.getElementById('start_button').disabled) {
+          audio.pause();
+          document.getElementById('start_button').disabled = false;
+          document.getElementById('range_wrapper').style.display = 'block';
+          VolumeControl.setVolume(0.2);
+        }
+      };
+
+      // 再生
+      document.getElementById('start_button').onclick = () => {
+        // ボタン2度押し防止
+        if (document.getElementById('start_button').disabled) {
+          return;
+        }
+
+        if (document.getElementById('range').value == 0) {
+          alert('音量が0です');
+          return;
+        }
+
+        // プラグイン
+        VolumeControl = cordova.plugins.VolumeControl;
+        VolumeControl.setVolume(document.getElementById('range').value);
+
+        // ボタンを非活性にする
+        document.getElementById('start_button').disabled = true;
+        document.getElementById('range_wrapper').style.display = 'none';
+
+        // スタート音声
+        audio = new Audio();
+        audio.src = './sound/start.mp3';
+        audio.play();
+
+        audio.addEventListener(
+          'ended',
+          () => {
+            // レジお願いします
+            audio = new Audio();
+            audio.src = './sound/output.wav';
+            audio.play();
+
+            audio.addEventListener(
+              'ended',
+              () => {
+                // 終了音声
+                audio = new Audio();
+                audio.src = './sound/end.mp3';
+                audio.play();
+
+                audio.addEventListener(
+                  'ended',
+                  () => {
+                    // ボタンを押せるようにする
+                    document.getElementById('start_button').disabled = false;
+                    document.getElementById('range_wrapper').style.display =
+                      'block';
+                    VolumeControl.setVolume(0.2);
+                  },
+                  false
+                );
+              },
+              false
+            );
+          },
+          false
+        );
+      };
+    </script>
+  </body>
+</html>
